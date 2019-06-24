@@ -73,86 +73,75 @@ app.get("/", function(req, res) {
 
 app.get("/:customListName", function(req, res) {
 
-      const customListName = req.params.customListName;
+  const customListName = req.params.customListName;
 
-      List.findOne({
-        name: customListName
-      }, function(err, foundList) {
-        if (!err) {
-          if (!foundList) {
-            const list = new List({
-              name: customListName,
-              items: defaultItems
-            });
+  List.findOne({name: customListName}, function(err, foundList) {
+    if (!err) {
+      if (!foundList) {
+        const list = new List({
+          name: customListName,
+          items: defaultItems
+        });
 
-            list.save();
-            res.redirect("/"+customListName);
-          } else {
-            res.render("list", {
-              listTitle: foundList.name,
-              newListItems: foundList.items
-            });
-          }
-        }
-      });
+        list.save();
+        res.redirect("/" + customListName);
+      } else {
+        res.render("list", {
+          listTitle: foundList.name,
+          newListItems: foundList.items
+        });
+      }
+    }
+  });
+});
+
+
+app.post("/", function(req, res) {
+
+  const itemName = req.body.newItem;
+  const listName = req.body.list;
+
+  const item = new Item({
+    name: itemName
+  });
+
+  if (listName === "Today") {
+    item.save();
+    res.redirect("/");
+  } else {
+    List.findOne({name: listName}, function(err, foundList) {
+      foundList.items.push(item);
+      foundList.save();
+      res.redirect("/" + listName);
     });
+  }
+});
 
+app.post("/delete", function(req, res) {
+  const checkedItemId = req.body.checkbox;
 
-
-    //       console.log("There is already a list with such name.");
-    //     }else{
-    //       const list = new List({
-    //         name: customListName,
-    //         items: defaultItems
-    //       });
-    //
-    //       list.save();
-    //
-    //       res.redirect("/"+customListName);
-    //     }
-    //   });
-    // });
-
-
-    app.post("/", function(req, res) {
-
-      const itemName = req.body.newItem;
-
-      const item = new Item({
-        name: itemName
-      });
-
-      item.save();
-
+  Item.findByIdAndRemove(checkedItemId, function(err) {
+    if (err) {
+      console.log(err);
+    } else {
       res.redirect("/");
-
-    });
-
-    app.post("/delete", function(req, res) {
-      const checkedItemId = req.body.checkbox;
-
-      Item.findByIdAndRemove(checkedItemId, function(err) {
-        if (err) {
-          console.log(err);
-        } else {
-          res.redirect("/");
-          console.log("Successfully deleted the checked item");
-        }
-      });
-    });
+      console.log("Successfully deleted the checked item");
+    }
+  });
+});
 
 
-    // app.get("/work", function(req, res) {
-    //   res.render("list", {
-    //     listTitle: "Today",
-    //     newListItems: workItems
-    //   });
-    // });
+// app.get("/work", function(req, res) {
+//   res.render("list", {
+//     listTitle: "Today",
+//     newListItems: workItems
+//   });
+// });
 
-    app.get("/about", function(req, res) {
-      res.render("about");
-    });
+app.get("/about", function(req, res) {
+  res.render("about");
+});
 
-    app.listen(3000, function() {
-      console.log("Server started on port 3000");
-    });
+app.listen(3000, function() {
+  console.log("Server started on port 3000");
+});
